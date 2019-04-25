@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Vilnius Rust Meetup #3</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/solarized.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section><h1>Building a Web App<br/>in Wasm<br/>with Rust and Yew</h1></section>
+        <section>
+            <h2>Whoami</h2>
+            <img style="border: none" src="static/introduce_myself.gif"/>
+            <p>Florent Bécart</p>
+            <aside class="notes" data-markdown>
+                * French, Backend Engineer
+                * Worked in startups
+                * Arrived in Vilnius in August
+                * Studying Rust and Lithuanian from a coworking space: NVO Avilys
+            </aside>
+        </section>
+        <section>
+            <h2>Why Rust?</h2>
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/rust-logo.png"/>
+            <aside class="notes" data-markdown>
+                * Search for the ideal programming language
+                * Maintainability of software (team, parallel programming)
+                * Conscious memory management
+            </aside>
+        </section>
+        <section>
+            <h2>Web Assembly</h2>
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/Web_Assembly_Logo.svg"/>
+            <aside class="notes" data-markdown>
+                * Efficient, low-level bytecode for the Web
+                * Fast to load and execute
+                * Safe and portable (similar to Java bytecode, sandboxed...)
+                * Intended as a compilation target (no GC ATM => C/C++/Rust)
+                * Currently good for Heavy CPU-bound number computations (e.g. Games)
+            </aside>
+        </section>
+        <section>
+            <h2>Web Assembly<br/><span style="color: red; font-size: 4em">♥</span><br/>Rust</h2>
+            <aside class="notes" data-markdown>
+                * Works well with Rust (no GC yet)
+                * I'll describe the tools to ship your first WebApp in wasm.
+            </aside>
+        </section>
+        <section>
+            <section>
+                <h2>Compilers</h2>
+                <aside class="notes" data-markdown>
+                    Here we're gonna have to make a choice!
+                </aside>
+            </section>
+            <section>
+                <img style="border-style: none; box-shadow: none" src="static/emscripten_logo.svg"/>
+                <aside class="notes" data-markdown>
+                    * Emscripten is the initial compiler to asmjs
+                    * First compiler able to generate wasm
+                </aside>
+            </section>
+            <section>
+                <h3>Nightly rustc</h3>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>Cargo Web</h2>
+                Github: <a href="https://github.com/koute/cargo-web">koute/cargo-web</a>
+                <aside class="notes" data-markdown>
+                    * Cargo subcommand
+                    * Build, test and deploy client-side Web applications written in Rust
+                    * Handles static files (index.html, css, js, fonts...) in `/static` or `/src/static`
+                </aside>
+            </section>
+            <section>
+                <h3>Cargo Web</h3>
+                <pre><code class="sh">cargo web start</code></pre>
+                <aside class="notes" data-markdown>
+                    `cargo web start` has option `--auto-reload` to refresh the browser automatically after a rebuild
+                </aside>
+            </section>
+            <section>
+                <h3>Cargo Web</h3>
+                <pre><code class="sh">
+# Using Emscripten
+cargo web start --target=wasm32-unknown-emscripten
+
+# Using native nightly rustc support
+cargo +nightly web start --target=wasm32-unknown-unknown
+                </code></pre>
+            </section>
+            <section>
+                <h3>Cargo Web</h3>
+                <pre><code class="sh">
+cargo web test
+
+cargo web deploy
+                </code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>stdweb</h2>
+                Github: <a href="https://github.com/koute/stdweb">koute/stdweb</a>
+                <aside class="notes" data-markdown>
+                    * Provides Rust bindings to the Web APIs
+                    * Allows a high degree of interoperability between Rust and JavaScript
+                </aside>
+            </section>
+            <section>
+                <h3>stdweb</h3>
+                <pre><code class="rust">
+let message = "Hello, World!";
+let result = js! {
+    alert(@{message});
+    return 2 + 2 * 2;
+};
+
+println!("2 + 2 * 2 = {:?}", result);
+                </code></pre>
+                <aside class="notes" data-markdown>
+                    * Supports closures, arbitrary structures (using serde)
+                </aside>
+            </section>
+            <section>
+                <h3>stdweb</h3>
+                <pre><code class="rust">
+let button = document()
+    .query_selector("#hide-button").unwrap().unwrap();
+
+button.add_event_listener(move |_: ClickEvent| {
+    for anchor in document().query_selector_all("#main a") {
+        js!(@{anchor}.style = "display: none;";);
+    }
+});
+                </code></pre>
+                <aside class="notes" data-markdown>
+                    Exposes Web APIs
+                </aside>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>Yew</h2>
+                Github: <a href="https://github.com/DenisKolodin/yew">DenisKolodin/yew</a>
+                <aside class="notes" data-markdown>
+                    * Frontend Webapp Rust framework
+                    * Inspirations: Elm, ReactJS
+                    * Multi-threaded (Web workers)
+                    * stable Rust
+                </aside>
+            </section>
+            <section>
+                <h3>Architecture of a Yew app</h3>
+                <aside class="notes" data-markdown>
+                    * A hierarchy of components
+                    * Each component implements the MVC pattern
+                    * Messages (enum) to go from View to Controller
+                </aside>
+            </section>
+            <section>
+                <h2>Example: a TODO list!</h2>
+                <img src="static/snoozrs_screenshot.png" />
+                <aside class="notes" data-markdown>
+                    * I built a pet project over the past month
+                </aside>
+            </section>
+            <section>
+                <h3>Let's look at some code: the task card</h3>
+                <img src="static/task_card_snoozed.png" />
+                <br/>
+                <img src="static/task_card_done.png" />
+                <aside class="notes" data-markdown>
+                    * Quite some boilerplate
+                    * Manageable thanks to the clean structure, separation of concerns
+                </aside>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Takeaways</h3>
+                <aside class="notes" data-markdown>
+                    * The tools are here already to build a WebAssembly App
+                    * Rust easier than CSS (borrow checker)
+                    * Best practices and design patterns in Rust
+                    * Rust 2018 (async/await, proc_macro...)
+                </aside>
+            </section>
+        </section>
+        <section>
+            <h2>Thank you!</h2>
+            <img style="height: 8em" src="static/jar_jar_binks.jpg"/>
+            <p>Twitter: <a href="https://twitter.com/fbecart">@fbecart</a></p>
+            <p>Github: <a href="https://github.com/fbecart">fbecart</a></p>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+  // More info https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    history: true,
+
+    // More info https://github.com/hakimel/reveal.js#dependencies
+    dependencies: [
+      { src: 'plugin/markdown/marked.js' },
+      { src: 'plugin/markdown/markdown.js' },
+      { src: 'plugin/notes/notes.js', async: true },
+      { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+    ]
+  });
+
+  // Shows the slide number using default formatting
+  Reveal.configure({ slideNumber: true });
+</script>
+</body>
+</html>

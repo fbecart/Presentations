@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Ownership and Borrowing</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/clue.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h1>Ownership and Borrowing</h1>
+        </section>
+        <section>
+            <section><h1>Introduction</h1></section>
+            <section>
+                <h2>Rust</h2>
+                <ul>
+                    <li>Systems Programming language</li>
+                    <li>
+                        History
+                        <ul>
+                            <li>2010: Mozilla research project</li>
+                            <li>May 2015: first stable version</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section>
+                <h2>Goals</h2>
+                <ul>
+                    <li>Safety</li>
+                    <li>Speed</li>
+                    <li>Concurrency</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Applications</h2>
+                <ul>
+                    <li>Rendering engines (Web, Video, Games...)</li>
+                    <li>Embedded systems</li>
+                    <li>Cryptography</li>
+                    <li>Operating Systems</li>
+                    <li>Parsers</li>
+                    <li>Databases</li>
+                    <li>Machine learning</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Steep learning curve</h2>
+                What makes Rust so different?
+            </section>
+        </section>
+        <section>
+            <h1>Issues we're trying to tackle</h1>
+        </section>
+        <section>
+            <section>
+                <h2>Memory management</h2>
+            </section>
+            <section>
+                <h3>Manual memory management</h3>
+                <ul>
+                    <li>Memory leaks</li>
+                    <li>Use after free</li>
+                    <li>Double free</li>
+                    <li>Garbage collection/Stop the world</li>
+                </ul>
+            </section>
+            <section>
+                <h3>GC or ARC</h3>
+                <ul>
+                    <li>Additional computation at runtime</li>
+                    <li>Unpredictable resource consumption</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>Parallel computing</h2>
+                <ul>
+                    <li>Concurrent access</li>
+                    <li>Race conditions</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Existing solutions</h3>
+                <ul>
+                    <li>Purely functional programming (everything immutable)</li>
+                    <li>Copy things all the time</li>
+                    <li>Trust the developers to know what they're doing</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h1>Concepts</h1>
+            </section>
+            <section>
+                <h2>Ownership</h2>
+                <pre><code class="rust">
+fn main() {
+  let v = vec![1, 2, 3];
+}
+                </code></pre>
+            </section>
+            <section>
+                <h2>Move semantics</h2>
+                <pre><code class="rust">
+fn main() {
+  let v = vec![1, 2, 3];
+
+  let v2 = v;
+}
+                </code></pre>
+            </section>
+            <section>
+                <h2>Move semantics</h2>
+                <pre><code class="rust">
+let v = vec![1, 2, 3];
+
+let v2 = v;
+
+println!("v[0] is: {}", v[0]);
+                </code></pre>
+                <pre><code>
+error: use of moved value: `v`
+println!("v[0] is: {}", v[0]);
+                        ^
+                </code></pre>
+            </section>
+            <section>
+                <h2>Move semantics</h2>
+                <pre><code class="rust">
+fn take(v: Vec&lt;i32&gt;) {
+    // What happens here isn’t important.
+}
+
+let v = vec![1, 2, 3];
+
+take(v);
+
+println!("v[0] is: {}", v[0]);
+                </code></pre>
+            </section>
+            <section>
+                <h2>Reference and Borrowing</h2>
+                <pre><code class="rust">
+fn foo(v1: &Vec&lt;i32&gt;, v2: &Vec&lt;i32&gt;) -> i32 {
+    // Do stuff with `v1` and `v2`.
+
+    // Return the answer.
+    42
+}
+
+let v1 = vec![1, 2, 3];
+let v2 = vec![1, 2, 3];
+
+let answer = foo(&v1, &v2);
+
+// We can use `v1` and `v2` here!
+                </code></pre>
+            </section>
+            <section>
+                <h2>Mutable references</h2>
+                <pre><code class="rust">
+let mut x = 5;
+{
+    let y = &mut x;
+    *y += 1;
+}
+println!("{}", x);
+                </code></pre>
+            </section>
+            <section>
+                <h2>Rules</h2>
+                <ul>
+                    <li>any borrow must last for a scope no greater than that of the owner</li>
+                    <li>one or more references (<code>&T</code>) to a resource</li>
+                    <li>exactly one mutable reference (<code>&mut T</code>)</li>
+                </ul>
+            </section>
+            <section>
+                <h2>Scopes</h2>
+                <pre><code class="rust">
+fn main() {
+    let mut x = 5;
+    let y = &mut x;
+
+    *y += 1;
+
+    println!("{}", x);
+}
+                </code></pre>
+                <code><pre>
+error: cannot borrow `x` as immutable because it is also borrowed as mutable
+    println!("{}", x);
+                   ^
+                </pre></code>
+            </section>
+            <section>
+                <h2>Scopes</h2>
+                <pre><code class="rust">
+fn main() {
+    let mut x = 5;
+
+    let y = &mut x;    // -+ &mut borrow of `x` starts here.
+                       //  |
+    *y += 1;           //  |
+                       //  |
+    println!("{}", x); // -+ - Try to borrow `x` here.
+}                      // -+ &mut borrow of `x` ends here.
+                </code></pre>
+            </section>
+            <section>
+                <h2>Scopes</h2>
+                <pre><code class="rust">
+let mut x = 5;
+
+{
+    let y = &mut x; // -+ &mut borrow starts here.
+    *y += 1;        //  |
+}                   // -+ ... and ends here.
+
+println!("{}", x);  // <- Try to borrow `x` here.
+                </code></pre>
+            </section>
+            <!--<section>-->
+                <!--<h2>Lifetime/Scope</h2>-->
+            <!--</section>-->
+        </section>
+        <section>
+            <h1>Prevents</h1>
+            <ul>
+                <li>data races</li>
+                <li>iterator invalidation</li>
+                <li>use after free</li>
+            </ul>
+        </section>
+        <section>
+            <section>
+                <h1>Let's try it!</h1>
+                <a href="https://github.com/fbecart/borrow-checker-examples">github.com/fbecart/borrow-checker-examples</a>
+            </section>
+        </section>
+        <section>
+            <h1>The End</h1>
+            <h2>Thanks!</h2>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+    // More info https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        history: true,
+        slideNumber: true,
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/notes/notes.js', async: true},
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                hljs.initHighlightingOnLoad();
+            }
+            }
+        ]
+    });
+</script>
+</body>
+</html>
