@@ -1,0 +1,251 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Server-side WebAssembly</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/solarized.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h1>Server-side WebAssembly</h1>
+            <aside class="notes" data-markdown>
+            </aside>
+        </section>
+        <section>
+            <!--<h2>Web Assembly</h2>-->
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/Web_Assembly_Logo.svg"/>
+            <aside class="notes" data-markdown>
+                * Efficient, low-level bytecode for the Web
+                * Fast to load and execute
+                * Safe and portable (similar to Java bytecode, sandboxed...)
+                * Open standard
+                * Intended as a compilation target (no GC ATM => C/C++)
+                * Currently good for Heavy CPU-bound number computations (e.g. Games)
+            </aside>
+        </section>
+        <section>
+            <!--<h2>Rust</h2>-->
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/rust-logo.png"/>
+            <aside class="notes" data-markdown>
+                Origin: Mozilla (working on next-gen Web browser)
+                Rust
+                - Built for safety & speed
+                - Does not require GC => good match for WebAssembly
+            </aside>
+        </section>
+        <section>
+            <section>
+                <!--<h2>Node</h2>-->
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/nodejs-logo.png"/>
+                <aside class="notes" data-markdown>
+                    I work on a node backend using a lot of CPU
+
+                    WebAssembly was initially designed to be loaded from JS
+                    Could we speed up our Node server code with WebAssembly?
+                </aside>
+            </section>
+            <section>
+                <!--<h2>Cloudflare</h2>-->
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/Cloudflare-logo.png"/>
+                <a href="https://blog.cloudflare.com/webassembly-on-cloudflare-workers/">https://blog.cloudflare.com/webassembly-on-cloudflare-workers/</a>
+                <aside class="notes" data-markdown>
+                    Edge computing
+
+                    Cloudflare Workers lets you deploy "serverless" JavaScript code directly to our 153-and-growing datacenters.
+                    Your Worker handles your site's HTTP traffic directly at the location closest to your end user, allowing you to achieve lower latency and reduce serving costs.
+                </aside>
+            </section>
+            <section>
+                <h2>Benchmark</h2>
+                <p>Compute stuff from a Node App</p>
+                <ul>
+                    <li>JS</li>
+                    <li>Native</li>
+                    <li>WebAssembly</li>
+                </ul>
+                <aside class="notes" data-markdown>
+                    Native uses neon
+                    TODO: Show code samples
+                </aside>
+            </section>
+            <section>
+                <h3>Javascript</h3>
+                <pre><code class="js">
+function sum(a, b) {
+  return a + b;
+}
+
+module.exports = {
+  sum,
+};
+                </code></pre>
+            </section>
+            <section>
+                <h3>AssemblyScript/WASM</h3>
+                <pre><code class="ts">
+export function sum(a: i32, b: i32): i32 {
+  return a + b;
+}
+                </code></pre>
+            </section>
+            <section>
+                <h3>Rust/WASM</h3>
+                <pre><code class="rust">
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub fn sum(a: usize, b: usize) -> usize {
+    a + b
+}
+                </code></pre>
+            </section>
+            <section>
+                <h3>Rust/Native</h3>
+                <pre><code class="rust">
+#[macro_use]
+extern crate neon;
+use neon::prelude::*;
+
+fn sum(mut cx: FunctionContext) -> JsResult&lt;JsNumber> {
+    let a = cx.argument::&lt;JsNumber>(0)?.value();
+    let b = cx.argument::&lt;JsNumber>(1)?.value();
+    Ok(cx.number(a + b))
+}
+
+register_module!(mut cx, {
+    cx.export_function("sum", sum)?;
+});
+                </code></pre>
+            </section>
+            <section>
+                <h3>Benchmark #1: Fibonacci</h3>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/fibonacci-bench.png"/>
+            </section>
+            <section>
+                <h3>Benchmark #2: Parse TOML file</h3>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/toml-bench.png"/>
+            </section>
+            <section>
+                <h3>Benchmark #3: Compute SHA1</h3>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/sha1-bench.png"/>
+            </section>
+            <section>
+                <h3>Benchmark #4: Sum</h3>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/sum-bench.png"/>
+                <aside class="notes" data-markdown>
+                    WASM is 10x faster than Native in this scenario
+                </aside>
+            </section>
+            <section>
+                <h2>Conclusion</h2>
+                <aside class="notes" data-markdown>
+                    For most computations, simply stick to JS.
+                    For heavy computations, when performance is critical, go native.
+
+                    No direct system calls (they have to be provided by JS)
+
+                    WebAssembly compared to native:
+                    - not as fast (e.g. lack of SIMD)
+                    - ship compiled version
+                    - simpler and faster FFI
+
+                    WebAssembly compared to JS:
+                    - much faster for heavy computations (low memory footprint & predictable performances)
+                    - still, heavy FFI price
+                    WASM programs operate in their own separate memory space, which means that it's necessary to copy data in and out of that space in order to operate on it.
+
+                    So, no WASM for our servers. But how about serverless?
+                </aside>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>Standalone WebAssembly runtimes</h2>
+                <ul>
+                    <li>Wasmer</li>
+                    <li>Wasmtime</li>
+                    <li>Lucet</li>
+                </ul>
+                <aside class="notes" data-markdown>
+                    WebAssembly is not irrelevant for server development
+                    There is a more radical/direct approach to use it
+
+                    JIT etc
+
+                    - secure by design (sandboxed)
+                    No need for Docker
+                    - low initialization cost compared to VMs/containers
+                    - low memory footprint
+                    - universal executable: build once, run anywhere
+                </aside>
+            </section>
+            <section>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/fastly-logo.png"/>
+                <a href="https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime">https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime</a>
+                <aside class="notes" data-markdown>
+                    Instanciate WASM module in under 50 microseconds (100x faster than Node)
+                    A few kb of memory overhead (10,000x less than Node)
+                </aside>
+            </section>
+            <section>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/WASI-logo.png"/>
+                <aside class="notes" data-markdown>
+                    The WebAssembly System Interface
+
+                    WASI is a modular system interface for WebAssembly. It’s focused on security and portability.
+                    WASI is being standardized in a subgroup of the WebAssembly Community Group.
+
+                    Soon, WASI might integrate node (quote from node dev)
+                </aside>
+            </section>
+        </section>
+        <section>
+            <h2>Thank you!</h2>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+  // More info https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    history: true,
+
+    // More info https://github.com/hakimel/reveal.js#dependencies
+    dependencies: [
+      { src: 'plugin/markdown/marked.js' },
+      { src: 'plugin/markdown/markdown.js' },
+      { src: 'plugin/notes/notes.js', async: true },
+      {
+        src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+          hljs.initHighlightingOnLoad();
+        }
+      }
+    ]
+  });
+
+  // Shows the slide number using default formatting
+  Reveal.configure({ slideNumber: true });
+</script>
+</body>
+</html>
