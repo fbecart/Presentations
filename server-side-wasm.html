@@ -37,7 +37,8 @@
                 * Fast to load and execute
                 * Safe and portable (similar to Java bytecode, sandboxed...)
                 * Open standard
-                * Intended as a compilation target (no GC ATM => C/C++)
+                * Intended as a compilation target (C/C++)
+                * No Garbage Collection
                 * Currently good for Heavy CPU-bound number computations (e.g. Games)
             </aside>
         </section>
@@ -46,7 +47,7 @@
             <img style="border-style: none; box-shadow: none; height: 8em" src="static/rust-logo.png"/>
             <aside class="notes" data-markdown>
                 Origin: Mozilla (working on next-gen Web browser)
-                Rust
+
                 - Built for safety & speed
                 - Does not require GC => good match for WebAssembly
             </aside>
@@ -82,8 +83,7 @@
                     <li>WebAssembly</li>
                 </ul>
                 <aside class="notes" data-markdown>
-                    Native uses neon
-                    TODO: Show code samples
+                    Native == neon
                 </aside>
             </section>
             <section>
@@ -116,6 +116,9 @@ pub fn sum(a: usize, b: usize) -> usize {
     a + b
 }
                 </code></pre>
+                <aside class="notes" data-markdown>
+                    FFI == Foreign Function Interface
+                </aside>
             </section>
             <section>
                 <h3>Rust/Native</h3>
@@ -138,39 +141,78 @@ register_module!(mut cx, {
             <section>
                 <h3>Benchmark #1: Fibonacci</h3>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/fibonacci-bench.png"/>
+                <aside class="notes" data-markdown>
+  - rust-ffi was the fastest
+  - ts-wasm was 2x slower than rust-ffi
+  - rust-wasm was 2x slower than rust-ffi
+  - js was 5x slower than rust-ffi
+
+  - js        x  72,369 ops/sec ±0.76% (84 runs sampled)
+  - rust-ffi  x 350,735 ops/sec ±1.50% (92 runs sampled)
+  - rust-wasm x 156,452 ops/sec ±0.62% (89 runs sampled)
+  - ts-wasm   x 157,366 ops/sec ±0.46% (95 runs sampled)
+                </aside>
             </section>
             <section>
                 <h3>Benchmark #2: Parse TOML file</h3>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/toml-bench.png"/>
+                <aside class="notes" data-markdown>
+  - rust-ffi was the fastest
+  - rust-wasm was 2x slower than rust-ffi
+  - js was 10x slower than rust-ffi
+
+
+  - js        x   851 ops/sec ±9.29% (61 runs sampled)
+  - rust-ffi  x 8,827 ops/sec ±8.13% (60 runs sampled)
+  - rust-wasm x 3,977 ops/sec ±9.86% (51 runs sampled)
+                </aside>
             </section>
             <section>
                 <h3>Benchmark #3: Compute SHA1</h3>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/sha1-bench.png"/>
+                <aside class="notes" data-markdown>
+                    - rust-ffi was the fastest
+                    - rust-wasm was 5x slower than rust-ffi
+                    - js was 237x slower than rust-ffi
+
+
+                    - js        x     7,821 ops/sec ±8.17% (76 runs sampled)
+                    - rust-ffi  x 1,852,213 ops/sec ±0.64% (94 runs sampled)
+                    - rust-wasm x   382,354 ops/sec ±2.25% (89 runs sampled)
+                </aside>
             </section>
             <section>
                 <h3>Benchmark #4: Sum</h3>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/sum-bench.png"/>
                 <aside class="notes" data-markdown>
-                    WASM is 10x faster than Native in this scenario
+                    - js was the fastest
+                    - ts-wasm was 9x slower than js
+                    - rust-wasm was 11x slower than js
+                    - rust-ffi was 88x slower than js
+
+                    - js        x 741,975,701 ops/sec ±0.78% (88 runs sampled)
+                    - rust-ffi  x   8,424,746 ops/sec ±0.81% (96 runs sampled)
+                    - rust-wasm x  70,611,062 ops/sec ±1.09% (94 runs sampled)
+                    - ts-wasm   x  84,443,591 ops/sec ±1.43% (93 runs sampled)
                 </aside>
             </section>
             <section>
                 <h2>Conclusion</h2>
                 <aside class="notes" data-markdown>
-                    For most computations, simply stick to JS.
-                    For heavy computations, when performance is critical, go native.
+                    WebAssembly compared to JS:
+                    - \+ much faster for heavy computations (low memory footprint & predictable performances)
+                    - \- still, heavy FFI price
+                    WASM programs operate in their own separate memory space, which means that it's necessary to copy data in and out of that space in order to operate on it.
+
+                    WebAssembly compared to native:
+                    - \- not as fast (e.g. lack of SIMD)
+                    - \+ ship compiled version
+                    - \+ simpler and faster FFI (e.g. AssemblyScript, Rust/Wasm Bindgen)
 
                     No direct system calls (they have to be provided by JS)
 
-                    WebAssembly compared to native:
-                    - not as fast (e.g. lack of SIMD)
-                    - ship compiled version
-                    - simpler and faster FFI
-
-                    WebAssembly compared to JS:
-                    - much faster for heavy computations (low memory footprint & predictable performances)
-                    - still, heavy FFI price
-                    WASM programs operate in their own separate memory space, which means that it's necessary to copy data in and out of that space in order to operate on it.
+                    For most computations, simply stick to JS.
+                    For heavy computations, when performance is critical, go native.
 
                     So, no WASM for our servers. But how about serverless?
                 </aside>
@@ -185,35 +227,40 @@ register_module!(mut cx, {
                     <li>Lucet</li>
                 </ul>
                 <aside class="notes" data-markdown>
-                    WebAssembly is not irrelevant for server development
-                    There is a more radical/direct approach to use it
+                    - WebAssembly is not irrelevant for server development
+                    - There is a more radical/direct approach
 
-                    JIT etc
-
-                    - secure by design (sandboxed)
-                    No need for Docker
-                    - low initialization cost compared to VMs/containers
-                    - low memory footprint
-                    - universal executable: build once, run anywhere
+                    Just-in-time compilation etc
                 </aside>
             </section>
             <section>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/fastly-logo.png"/>
                 <a href="https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime">https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime</a>
                 <aside class="notes" data-markdown>
-                    Instanciate WASM module in under 50 microseconds (100x faster than Node)
-                    A few kb of memory overhead (10,000x less than Node)
+                    Example of performance to expect:
+
+                    - Instantiate WASM module in under 50 microseconds (100x faster than Node)
+                    - A few kb of memory overhead (10,000x less than Node)
+
+                    Benchmarks don't make sense. The products don't compare
                 </aside>
             </section>
             <section>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/WASI-logo.png"/>
                 <aside class="notes" data-markdown>
-                    The WebAssembly System Interface
-
-                    WASI is a modular system interface for WebAssembly. It’s focused on security and portability.
-                    WASI is being standardized in a subgroup of the WebAssembly Community Group.
-
-                    Soon, WASI might integrate node (quote from node dev)
+                    - The WebAssembly System Interface
+                    - modular system interface for WebAssembly
+                    - focused on security and portability
+                </aside>
+            </section>
+            <section>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/future.png"/>
+                <aside class="notes" data-markdown>
+                    - Run your cloud functions at a fraction of the current cost
+                    - Faster than ever, low memory footprint
+                    - Pick your favorite language
+                    - Universal executable: build once, run anywhere
+                    - Don't have to negotiate on security either (isolated execution, sandbox)
                 </aside>
             </section>
         </section>
