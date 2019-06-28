@@ -30,16 +30,13 @@
             </aside>
         </section>
         <section>
-            <!--<h2>Web Assembly</h2>-->
-            <img style="border-style: none; box-shadow: none; height: 8em" src="static/Web_Assembly_Logo.svg"/>
+            <!--<h2>Node</h2>-->
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/nodejs-logo.png"/>
             <aside class="notes" data-markdown>
-                * Efficient, low-level bytecode for the Web
-                * Fast to load and execute
-                * Safe and portable (similar to Java bytecode, sandboxed...)
-                * Open standard
-                * Intended as a compilation target (C/C++)
-                * No Garbage Collection
-                * Currently good for Heavy CPU-bound number computations (e.g. Games)
+                I work on a node backend using a lot of CPU
+
+                WebAssembly was initially designed to be loaded from JS
+                Could we speed up our Node server code with WebAssembly?
             </aside>
         </section>
         <section>
@@ -53,16 +50,19 @@
             </aside>
         </section>
         <section>
-            <section>
-                <!--<h2>Node</h2>-->
-                <img style="border-style: none; box-shadow: none; height: 8em" src="static/nodejs-logo.png"/>
-                <aside class="notes" data-markdown>
-                    I work on a node backend using a lot of CPU
-
-                    WebAssembly was initially designed to be loaded from JS
-                    Could we speed up our Node server code with WebAssembly?
-                </aside>
-            </section>
+            <!--<h2>Web Assembly</h2>-->
+            <img style="border-style: none; box-shadow: none; height: 8em" src="static/Web_Assembly_Logo.svg"/>
+            <aside class="notes" data-markdown>
+                * Efficient, low-level bytecode for the Web
+                * Fast to load and execute
+                * Safe and portable (similar to Java bytecode, sandboxed...)
+                * Open standard
+                * Intended as a compilation target (C/C++)
+                * No Garbage Collection (lightweight runtime)
+                * Currently good for Heavy CPU-bound number computations (e.g. Games)
+            </aside>
+        </section>
+        <section>
             <section>
                 <!--<h2>Cloudflare</h2>-->
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/Cloudflare-logo.png"/>
@@ -234,6 +234,14 @@ register_module!(mut cx, {
                 </aside>
             </section>
             <section>
+                <img style="border-style: none; box-shadow: none; height: 8em" src="static/WASI-logo.png"/>
+                <aside class="notes" data-markdown>
+                    - The WebAssembly System Interface
+                    - modular system interface for WebAssembly
+                    - focused on security and portability
+                </aside>
+            </section>
+            <section>
                 <img style="border-style: none; box-shadow: none; height: 8em" src="static/fastly-logo.png"/>
                 <a href="https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime">https://www.fastly.com/blog/announcing-lucet-fastly-native-webassembly-compiler-runtime</a>
                 <aside class="notes" data-markdown>
@@ -243,14 +251,6 @@ register_module!(mut cx, {
                     - A few kb of memory overhead (10,000x less than Node)
 
                     Benchmarks don't make sense. The products don't compare
-                </aside>
-            </section>
-            <section>
-                <img style="border-style: none; box-shadow: none; height: 8em" src="static/WASI-logo.png"/>
-                <aside class="notes" data-markdown>
-                    - The WebAssembly System Interface
-                    - modular system interface for WebAssembly
-                    - focused on security and portability
                 </aside>
             </section>
             <section>
